@@ -8,6 +8,7 @@ export interface IPayment extends Document {
   currency: string;
   status: 'created' | 'attempted' | 'paid' | 'failed';
   email: string;
+  imageCount?: number;  // Added field for DreamChant
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +27,7 @@ const PaymentSchema: Schema = new Schema(
       default: 'created' 
     },
     email: { type: String, required: true },
+    imageCount: { type: Number }, // For DreamChant - number of images purchased
   },
   { timestamps: true }
 );

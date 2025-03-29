@@ -5,6 +5,9 @@ import Script from 'next/script';
 
 interface PaymentFormProps {
   onSuccess: (details: any) => void;
+  prefillEmail?: string;
+  prefillAmount?: string;
+  imageCount?: number;
 }
 
 declare global {
@@ -57,12 +60,21 @@ interface RazorpayInstance {
   close(): void;
 }
 
-export default function PaymentForm({ onSuccess }: PaymentFormProps) {
-  const [email, setEmail] = useState('');
-  const [amount, setAmount] = useState('');
+export default function PaymentForm({ onSuccess, prefillEmail = '', prefillAmount = '', imageCount }: PaymentFormProps) {
+  const [email, setEmail] = useState(prefillEmail);
+  const [amount, setAmount] = useState(prefillAmount);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
+
+  // Update state when props change
+  useEffect(() => {
+    setEmail(prefillEmail);
+  }, [prefillEmail]);
+
+  useEffect(() => {
+    setAmount(prefillAmount);
+  }, [prefillAmount]);
 
   useEffect(() => {
     // Check if Razorpay is already loaded
@@ -124,6 +136,7 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         body: JSON.stringify({
           amount: parseFloat(amount),
           email,
+          imageCount: imageCount || undefined,
         }),
       });
 
@@ -146,8 +159,8 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         key: razorpayKeyId,
         amount: data.amount,
         currency: data.currency,
-        name: 'Next.js Razorpay App',
-        description: 'Payment for your order',
+        name: 'DreamChant AI',
+        description: 'Payment for AI-generated images',
         order_id: data.id,
         handler: async function (response: RazorpayResponse) {
           try {
