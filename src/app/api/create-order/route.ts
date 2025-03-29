@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     // Parse the request body
     const body = await req.json();
-    const { amount, email, imageCount } = body;
+    const { amount, email, packageDetails } = body;
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       currency: 'INR',
       status: 'created',
       email,
-      imageCount, // Store the number of images if provided
+      packageDetails // Add this to store package information
     });
 
     return NextResponse.json({
