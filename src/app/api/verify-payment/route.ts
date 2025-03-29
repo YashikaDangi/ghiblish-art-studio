@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSignature } from '@/lib/razorpay';
 import connectToDatabase from '@/lib/mongodb';
@@ -18,6 +19,23 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    console.log('Payment verification details:', {
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      // Don't log the full signature for security reasons
+      signatureLength: razorpay_signature.length,
+    });
+
+    // First, update payment to attempted status
+    await Payment.findOneAndUpdate(
+      { orderId: razorpay_order_id },
+      { 
+        status: 'attempted',
+        paymentId: razorpay_payment_id,
+        signature: razorpay_signature,
+      }
+    );
 
     // Verify the payment signature
     const isValidSignature = verifyPaymentSignature(
@@ -43,7 +61,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update payment status in the database
+    // Update payment status in the database to paid
     const payment = await Payment.findOneAndUpdate(
       { orderId: razorpay_order_id },
       { 
