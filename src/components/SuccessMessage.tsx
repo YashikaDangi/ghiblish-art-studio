@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 interface SuccessMessageProps {
   paymentDetails: {
@@ -6,7 +7,11 @@ interface SuccessMessageProps {
     paymentId: string;
     amount: number;
     email: string;
-    imageCount?: number;
+    package?: {
+      name: string;
+      photoLimit: number;
+      description: string;
+    };
   };
   onReset: () => void;
 }
@@ -24,11 +29,6 @@ export default function SuccessMessage({ paymentDetails, onReset }: SuccessMessa
       <h3 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
       <p className="text-gray-600 mb-8">
         Thank you for your payment. Your transaction has been completed successfully.
-        {paymentDetails.imageCount && (
-          <span className="block mt-2">
-            You'll receive your {paymentDetails.imageCount} {paymentDetails.imageCount === 1 ? 'image' : 'images'} at the provided email shortly.
-          </span>
-        )}
       </p>
       
       <div className="bg-gray-50 rounded-xl overflow-hidden shadow mb-8">
@@ -57,12 +57,12 @@ export default function SuccessMessage({ paymentDetails, onReset }: SuccessMessa
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Email</p>
               <p className="text-sm font-medium text-gray-800">{paymentDetails.email}</p>
             </div>
-            
-            {paymentDetails.imageCount && (
+
+            {paymentDetails.package && (
               <div className="text-left col-span-2">
-                <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Images Purchased</p>
+                <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Package</p>
                 <p className="text-sm font-medium text-gray-800">
-                  {paymentDetails.imageCount} {paymentDetails.imageCount === 1 ? 'image' : 'images'}
+                  {paymentDetails.package.name} - {paymentDetails.package.description}
                 </p>
               </div>
             )}
@@ -70,13 +70,22 @@ export default function SuccessMessage({ paymentDetails, onReset }: SuccessMessa
         </div>
       </div>
       
-      <button
-        type="button"
-        onClick={onReset}
-        className="px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-150"
-      >
-        Generate More Images
-      </button>
+      <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <Link
+          href={`/upload-photos?orderId=${paymentDetails.orderId}`}
+          className="px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150"
+        >
+          Upload Photos
+        </Link>
+        
+        <button
+          type="button"
+          onClick={onReset}
+          className="px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150"
+        >
+          Make Another Payment
+        </button>
+      </div>
       
       <style jsx>{`
         .success-animation {

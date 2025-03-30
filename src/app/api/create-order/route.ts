@@ -26,6 +26,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate package details
+    if (!packageDetails || !packageDetails.name || !packageDetails.photoLimit) {
+      return NextResponse.json(
+        { error: 'Package details are required' },
+        { status: 400 }
+      );
+    }
+
     // Create a Razorpay order
     const order = await createOrder(amount);
 
@@ -36,7 +44,12 @@ export async function POST(req: NextRequest) {
       currency: 'INR',
       status: 'created',
       email,
-      packageDetails // Add this to store package information
+      packageDetails: {
+        name: packageDetails.name,
+        photoLimit: packageDetails.photoLimit,
+        description: packageDetails.description || ''
+      },
+      photosUploaded: 0
     });
 
     return NextResponse.json({
