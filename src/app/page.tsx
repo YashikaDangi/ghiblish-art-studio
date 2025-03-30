@@ -1,291 +1,280 @@
+// src/app/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import PaymentForm from '@/components/PaymentForm';
-import SuccessMessage from '@/components/SuccessMessage';
+import { useRouter } from 'next/navigation';
+
+interface PackageOption {
+  id: string;
+  name: string;
+  photoCount: number;
+  price: number;
+  description: string;
+}
 
 export default function Home() {
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [paymentDetails, setPaymentDetails] = useState<any>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const router = useRouter();
+  const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(null);
 
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
+  const packages: PackageOption[] = [
+    {
+      id: 'basic',
+      name: 'Single Photo',
+      photoCount: 1,
+      price: 50,
+      description: 'Transform 1 photo into Ghibli style'
+    },
+    {
+      id: 'standard',
+      name: 'Photo Pack',
+      photoCount: 5,
+      price: 200,
+      description: 'Transform 5 photos into Ghibli style'
+    },
+    {
+      id: 'premium',
+      name: 'Studio Collection',
+      photoCount: 15,
+      price: 500,
+      description: 'Transform 15 photos into Ghibli style'
+    }
+  ];
+
+  const handleContinue = () => {
+    if (selectedPackage) {
+      // Store the selected package in session storage
+      sessionStorage.setItem('selectedPhotoPackage', JSON.stringify(selectedPackage));
+      
+      // Redirect to payment page
+      router.push('/payment');
+    }
+  };
 
   return (
-    <div className={`min-h-screen bg-slate-50 transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-      {/* Decorative elements - cartoonish clouds */}
-      <div className="fixed top-20 left-10 w-24 h-16 bg-white rounded-full"></div>
-      <div className="fixed top-16 left-20 w-32 h-20 bg-white rounded-full"></div>
-      <div className="fixed top-36 right-20 w-32 h-16 bg-white rounded-full"></div>
-      <div className="fixed top-32 right-36 w-24 h-16 bg-white rounded-full"></div>
-      <div className="fixed bottom-32 left-1/4 w-32 h-16 bg-white rounded-full"></div>
-      <div className="fixed bottom-36 left-1/4 -ml-12 w-24 h-14 bg-white rounded-full"></div>
-      
-      <div className="max-w-6xl mx-auto px-4 py-16 relative z-10">
-        {/* Playful header */}
-        <div className="text-center mb-16">
-          <div className="inline-block relative mb-6">
-            <h1 className="text-5xl font-bold text-indigo-600 mb-2 tracking-tight relative z-10">
-              Photo Upload Service
-            </h1>
-            <div className="absolute -bottom-2 left-0 right-0 h-4 bg-yellow-300 -z-10 transform -rotate-1"></div>
-          </div>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Preserve your memories with our premium photo storage solution
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">Ghibli Style</span>
+            <span className="block">Photo Transformer</span>
+          </h1>
+          <p className="mt-6 text-xl text-gray-500">
+            Transform your favorite photos into beautiful Studio Ghibli art style with AI-powered technology.
           </p>
         </div>
 
-        {/* Main content - No box, open layout */}
-        <div className="space-y-16">
-          {/* Header section */}
-          {/* <div className={`text-center ${isLoaded ? 'animate-bounce-in' : ''}`}>
-            <div className="inline-block bg-indigo-100 py-3 px-6 rounded-full mb-6">
-              <h2 className="text-2xl font-bold text-indigo-600">
-                {paymentSuccess ? 'Payment Successful!' : 'Choose Your Package'}
-              </h2>
+        {/* Example Images */}
+        <div className="mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center">
+              <div className="relative h-64 w-full overflow-hidden rounded-lg shadow-lg">
+                <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                  <div className="text-white text-sm font-medium">Original Photo</div>
+                </div>
+              </div>
+              <div className="mt-4 text-center">
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-0.5 text-sm font-medium text-gray-800">
+                  Your Photo
+                </span>
+              </div>
             </div>
-            {!paymentSuccess && (
-              <p className="text-slate-600 max-w-xl mx-auto">
-                Select the perfect package for your photo collection and complete your payment in just a few clicks
-              </p>
-            )}
-          </div> */}
 
-          {paymentSuccess ? (
-            <div className="max-w-2xl mx-auto">
-              <SuccessMessage 
-                paymentDetails={paymentDetails} 
-                onReset={() => {
-                  setPaymentSuccess(false);
-                  setPaymentDetails(null);
-                }} 
-              />
+            <div className="flex items-center justify-center">
+              <svg className="h-12 w-12 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </div>
-          ) : (
-            <>
-              {/* Package selection - Cartoon-style cards */}
-              <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                {[
-                  { name: 'Basic', photos: '100', price: '499', color: 'bg-green-400', features: ['Cloud storage', 'Easy sharing', 'Basic editing'] },
-                  { name: 'Standard', photos: '500', price: '999', color: 'bg-indigo-400', features: ['Cloud storage', 'Easy sharing', 'Advanced editing', 'Albums'] },
-                  { name: 'Premium', photos: '2000', price: '1999', color: 'bg-purple-400', features: ['Cloud storage', 'Easy sharing', 'Pro editing', 'Albums', 'AI organization'] },
-                ].map((pkg, index) => (
+
+            <div className="flex flex-col items-center">
+              <div className="relative h-64 w-full overflow-hidden rounded-lg shadow-lg">
+                <div className="absolute inset-0 bg-purple-200 animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                  <div className="text-white text-sm font-medium">Ghibli Style</div>
+                </div>
+              </div>
+              <div className="mt-4 text-center">
+                <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-0.5 text-sm font-medium text-purple-800">
+                  AI Transformed
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* How It Works */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+              <div className="flex items-center justify-center w-12 h-12 bg-pink-100 text-pink-600 rounded-full mb-4">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">1. Choose a Package</h3>
+              <p className="text-gray-500">
+                Select how many photos you want to transform into Ghibli style art.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+              <div className="flex items-center justify-center w-12 h-12 bg-purple-100 text-purple-600 rounded-full mb-4">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">2. Complete Payment</h3>
+              <p className="text-gray-500">
+                Pay securely using Razorpay. We offer affordable packages for everyone.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+              <div className="flex items-center justify-center w-12 h-12 bg-green-100 text-green-600 rounded-full mb-4">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">3. Upload & Transform</h3>
+              <p className="text-gray-500">
+                Upload your photos and watch them transform into beautiful Ghibli-style artwork to download.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Package Selection */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Choose Your Package</h2>
+          
+          <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-pink-500 to-purple-600 py-6 px-8 text-white">
+              <h2 className="text-3xl font-bold">
+                Select Your Ghibli Transformation Package
+              </h2>
+              <p className="mt-2 opacity-90">
+                Choose how many photos you want to transform into beautiful Ghibli art style
+              </p>
+            </div>
+            
+            <div className="p-8">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+                {packages.map((pkg) => (
                   <div 
-                    key={index}
-                    className={`rounded-xl p-6 ${pkg.color} text-white transform transition-all duration-300 hover:scale-105 ${isLoaded ? 'animate-pop-in' : ''}`}
-                    style={{ animationDelay: `${index * 150}ms` }}
+                    key={pkg.id}
+                    onClick={() => setSelectedPackage(pkg)}
+                    className={`border rounded-lg p-6 cursor-pointer transition-all duration-200 ${
+                      selectedPackage?.id === pkg.id 
+                        ? 'border-purple-500 bg-purple-50 shadow-md transform scale-105' 
+                        : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50'
+                    }`}
                   >
-                    <div className="bg-white/20 p-4 rounded-lg backdrop-blur-sm">
-                      <h4 className="text-xl font-bold mb-3">{pkg.name}</h4>
-                      <div className="text-3xl font-bold mb-3">₹{pkg.price}</div>
-                      <p className="opacity-90 mb-4">Upload up to {pkg.photos} photos</p>
-                      <ul className="space-y-2 text-sm mb-4">
-                        {pkg.features.map((feature, i) => (
-                          <li key={i} className="flex items-center">
-                            <svg className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-xl font-bold text-gray-900">{pkg.name}</h3>
+                      {selectedPackage?.id === pkg.id && (
+                        <div className="bg-purple-500 text-white p-1 rounded-full">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-4 text-3xl font-bold text-gray-900">
+                      ₹{pkg.price}
+                    </div>
+                    
+                    <div className="mt-2 text-sm text-gray-500">
+                      {pkg.description}
+                    </div>
+                    
+                    <div className="mt-4 flex items-center">
+                      <div className="bg-purple-100 p-2 rounded-full mr-2">
+                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">
+                        {pkg.photoCount} {pkg.photoCount === 1 ? 'Photo' : 'Photos'}
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* Payment form */}
-              <div className="max-w-2xl mx-auto p-8 bg-white rounded-2xl shadow-lg">
-                <div className="flex items-center mb-6">
-                  <div className="p-3 rounded-full bg-indigo-100">
-                    <svg className="h-7 w-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-xl font-bold text-slate-800">Complete Your Purchase</h3>
-                    <p className="text-slate-600">Enter your details below to process the payment</p>
-                  </div>
-                </div>
-                <PaymentForm 
-                  onSuccess={(details) => {
-                    setPaymentSuccess(true);
-                    setPaymentDetails(details);
-                  }} 
-                />
-              </div>
-            </>
-          )}
-
-          {/* Features section with cartoon-style icons */}
-          <div className="py-12">
-            <h3 className="text-2xl font-bold text-center text-indigo-600 mb-10 relative inline-block mx-auto">
-              <span className="relative z-10">Why Choose Us?</span>
-              <div className="absolute -bottom-2 left-0 right-0 h-3 bg-yellow-300 -z-10 transform -rotate-1"></div>
-            </h3>
-            
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className={`text-center ${isLoaded ? 'animate-slide-in-left' : ''}`}>
-                <div className="w-24 h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                  </svg>
-                </div>
-                <h4 className="text-lg font-bold text-slate-800 mb-2">Secure Storage</h4>
-                <p className="text-slate-600">Your photos are securely stored with multiple backups</p>
-              </div>
               
-              <div className={`text-center ${isLoaded ? 'animate-slide-in-left' : ''}`} style={{ animationDelay: "150ms" }}>
-                <div className="w-24 h-24 mx-auto bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h4 className="text-lg font-bold text-slate-800 mb-2">Beautiful Galleries</h4>
-                <p className="text-slate-600">Showcase your photos in stunning gallery layouts</p>
-              </div>
-              
-              <div className={`text-center ${isLoaded ? 'animate-slide-in-left' : ''}`} style={{ animationDelay: "300ms" }}>
-                <div className="w-24 h-24 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="h-12 w-12 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-                <h4 className="text-lg font-bold text-slate-800 mb-2">Easy Sharing</h4>
-                <p className="text-slate-600">Share with friends and family with just a click</p>
+              <div className="mt-8">
+                <button
+                  onClick={handleContinue}
+                  disabled={!selectedPackage}
+                  className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 transition-all duration-150"
+                >
+                  Continue to Payment
+                </button>
               </div>
             </div>
-          </div>
-          
-          {/* Testimonials with cartoon speech bubbles */}
-          <div className="pt-8 pb-16">
-            <h3 className="text-2xl font-bold text-center text-indigo-600 mb-10 relative inline-block mx-auto">
-              <span className="relative z-10">What Our Users Say</span>
-              <div className="absolute -bottom-2 left-0 right-0 h-3 bg-yellow-300 -z-10 transform -rotate-1"></div>
-            </h3>
-            
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              {[
-                { name: "Sarah J.", quote: "The easiest way to store my travel photos.", color: "bg-green-100" },
-                { name: "Michael T.", quote: "Beautiful interface and very reliable service.", color: "bg-indigo-100" },
-                { name: "Priya K.", quote: "I love how easy it is to share photos with family.", color: "bg-purple-100" }
-              ].map((testimonial, index) => (
-                <div key={index} className={`${isLoaded ? 'animate-float-in' : ''}`} style={{ animationDelay: `${index * 200}ms` }}>
-                  <div className={`${testimonial.color} p-5 rounded-2xl relative mb-6`}>
-                    <p className="text-slate-700 italic">"{testimonial.quote}"</p>
-                    {/* Speech bubble triangle */}
-                    <div className={`absolute -bottom-4 left-8 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent ${testimonial.color.replace('bg-', 'border-t-')}`}></div>
-                  </div>
-                  <div className="flex items-center pl-8">
-                    <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-white font-bold">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <p className="ml-3 font-medium text-slate-700">{testimonial.name}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Navigation links */}
-          <div className="flex justify-center space-x-6 items-center">
-            <Link 
-              href="/payment-history" 
-              className="inline-flex items-center bg-indigo-100 text-indigo-600 hover:bg-indigo-200 py-3 px-6 rounded-full transition-colors font-medium"
-            >
-              <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              Payment History
-            </Link>
-            
-            <Link 
-              href="/photo-gallery" 
-              className="inline-flex items-center bg-green-100 text-green-600 hover:bg-green-200 py-3 px-6 rounded-full transition-colors font-medium"
-            >
-              <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              View Gallery
-            </Link>
           </div>
         </div>
+
+        {/* FAQ Section */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Frequently Asked Questions</h2>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden divide-y divide-gray-200">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900">What is Ghibli style art?</h3>
+              <p className="mt-2 text-gray-500">
+                Studio Ghibli is a renowned Japanese animation studio known for its distinctive art style characterized by vibrant colors, detailed backgrounds, and dreamlike quality. Our AI transforms your photos to match this beautiful aesthetic.
+              </p>
+            </div>
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900">How long does the transformation take?</h3>
+              <p className="mt-2 text-gray-500">
+                Each photo typically takes 30-60 seconds to transform, depending on the complexity of the image and current server load.
+              </p>
+            </div>
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900">What types of photos work best?</h3>
+              <p className="mt-2 text-gray-500">
+                Photos with clear subjects, good lighting, and interesting scenery work best. Landscapes, portraits, and nature shots transform particularly well into Ghibli style.
+              </p>
+            </div>
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900">Can I use the transformed images commercially?</h3>
+              <p className="mt-2 text-gray-500">
+                The transformed images are for personal use only. If you want to use them commercially, please contact us for licensing options.
+              </p>
+            </div>
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900">What if I'm not satisfied with the results?</h3>
+              <p className="mt-2 text-gray-500">
+                If you're not happy with the transformation results, please contact our support team within 7 days of purchase for a refund or to try different photos.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="border-t border-gray-200 pt-8">
+          <div className="text-center">
+            <p className="text-gray-500 text-sm">
+              © {new Date().getFullYear()} Ghibli Style Transformer. All rights reserved.
+            </p>
+            <div className="mt-4 flex justify-center space-x-6">
+              <a href="#" className="text-gray-400 hover:text-gray-500">
+                Terms of Service
+              </a>
+              <a href="#" className="text-gray-400 hover:text-gray-500">
+                Privacy Policy
+              </a>
+              <a href="#" className="text-gray-400 hover:text-gray-500">
+                Contact Us
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
-      
-      {/* Add global styles for animations */}
-      <style jsx global>{`
-        @keyframes bounceIn {
-          0% {
-            opacity: 0;
-            transform: scale(0.3);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.05);
-          }
-          70% {
-            transform: scale(0.9);
-          }
-          100% {
-            transform: scale(1);
-          }
-        }
-        
-        @keyframes popIn {
-          0% {
-            opacity: 0;
-            transform: scale(0.5);
-          }
-          70% {
-            transform: scale(1.1);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
-        @keyframes slideInLeft {
-          0% {
-            opacity: 0;
-            transform: translateX(-50px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes floatIn {
-          0% {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-bounce-in {
-          animation: bounceIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        
-        .animate-pop-in {
-          animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        
-        .animate-slide-in-left {
-          animation: slideInLeft 0.5s ease-out forwards;
-        }
-        
-        .animate-float-in {
-          animation: floatIn 0.5s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 }

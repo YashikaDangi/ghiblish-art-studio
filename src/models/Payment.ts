@@ -1,13 +1,5 @@
+// src/models/Payment.ts
 import mongoose, { Document, Schema } from 'mongoose';
-
-interface UploadedPhoto {
-  originalName: string;
-  fileName: string;
-  size: number;
-  type: string;
-  path: string;
-  uploadedAt?: Date;
-}
 
 export interface IPayment extends Document {
   orderId: string;
@@ -17,25 +9,12 @@ export interface IPayment extends Document {
   currency: string;
   status: 'created' | 'attempted' | 'paid' | 'failed';
   email: string;
-  packageDetails: {
-    name: string;
-    photoLimit: number;
-    description?: string;
-  };
-  photosUploaded: number;
-  uploads: UploadedPhoto[];
+  packageId?: string;
+  photoCount?: number;
+  type: 'standard' | 'ghibli_transformation';
   createdAt: Date;
   updatedAt: Date;
 }
-
-const UploadedPhotoSchema = new Schema({
-  originalName: { type: String, required: true },
-  fileName: { type: String, required: true },
-  size: { type: Number, required: true },
-  type: { type: String, required: true },
-  path: { type: String, required: true },
-  uploadedAt: { type: Date, default: Date.now }
-});
 
 const PaymentSchema: Schema = new Schema(
   {
@@ -51,13 +30,14 @@ const PaymentSchema: Schema = new Schema(
       default: 'created' 
     },
     email: { type: String, required: true },
-    packageDetails: {
-      name: { type: String, required: true },
-      photoLimit: { type: Number, required: true },
-      description: { type: String }
+    packageId: { type: String, sparse: true }, // For Ghibli transformation packages
+    photoCount: { type: Number, sparse: true }, // Number of photos in the package
+    type: { 
+      type: String, 
+      required: true, 
+      enum: ['standard', 'ghibli_transformation'],
+      default: 'standard'
     },
-    photosUploaded: { type: Number, default: 0 },
-    uploads: [UploadedPhotoSchema]
   },
   { timestamps: true }
 );

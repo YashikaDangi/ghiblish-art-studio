@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "openai": "^4.24.1",
     "crypto": "^1.0.1",
     "mongoose": "^8.13.1",
     "next": "15.2.4",

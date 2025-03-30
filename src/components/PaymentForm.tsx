@@ -1,3 +1,4 @@
+// src/components/PaymentForm.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,6 +6,14 @@ import Script from 'next/script';
 
 interface PaymentFormProps {
   onSuccess: (details: any) => void;
+  initialAmount?: string;
+  packageInfo?: {
+    id: string;
+    name: string;
+    photoCount: number;
+    price: number;
+    description: string;
+  };
 }
 
 declare global {
@@ -57,45 +66,13 @@ interface RazorpayInstance {
   close(): void;
 }
 
-interface PackageOption {
-  id: string;
-  name: string;
-  price: number;
-  photoLimit: number;
-  description: string;
-}
-
-export default function PaymentForm({ onSuccess }: PaymentFormProps) {
+export default function PaymentForm({ onSuccess, initialAmount, packageInfo }: PaymentFormProps) {
   const [email, setEmail] = useState('');
-  const [selectedPackage, setSelectedPackage] = useState<PackageOption | null>(null);
+  const [amount, setAmount] = useState(initialAmount || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
-
-  // Package options
-  const packages: PackageOption[] = [
-    {
-      id: 'basic',
-      name: 'Basic Package',
-      price: 20,
-      photoLimit: 1,
-      description: 'Upload 1 photo'
-    },
-    {
-      id: 'standard',
-      name: 'Standard Package',
-      price: 40,
-      photoLimit: 5,
-      description: 'Upload up to 5 photos'
-    },
-    {
-      id: 'premium',
-      name: 'Premium Package',
-      price: 80,
-      photoLimit: 10,
-      description: 'Upload up to 10 photos'
-    }
-  ];
+  const [amountDisabled, setAmountDisabled] = useState(!!initialAmount);
 
   useEffect(() => {
     // Check if Razorpay is already loaded
@@ -103,6 +80,14 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
       setIsRazorpayLoaded(true);
     }
   }, []);
+
+  // Update amount if initialAmount changes
+  useEffect(() => {
+    if (initialAmount) {
+      setAmount(initialAmount);
+      setAmountDisabled(true);
+    }
+  }, [initialAmount]);
 
   const handleRazorpayLoad = () => {
     setIsRazorpayLoaded(true);
@@ -119,8 +104,14 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
       return false;
     }
 
-    if (!selectedPackage) {
-      setError('Please select a package');
+    if (!amount.trim()) {
+      setError('Amount is required');
+      return false;
+    }
+
+    const amountValue = parseFloat(amount);
+    if (isNaN(amountValue) || amountValue <= 0) {
+      setError('Please enter a valid amount greater than 0');
       return false;
     }
 
@@ -149,13 +140,10 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: selectedPackage?.price,
+          amount: parseFloat(amount),
           email,
-          packageDetails: {
-            name: selectedPackage?.name,
-            photoLimit: selectedPackage?.photoLimit,
-            description: selectedPackage?.description
-          }
+          packageId: packageInfo?.id,
+          photoCount: packageInfo?.photoCount
         }),
       });
 
@@ -178,8 +166,8 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         key: razorpayKeyId,
         amount: data.amount,
         currency: data.currency,
-        name: 'Photo Upload Service',
-        description: `Payment for ${selectedPackage?.name}`,
+        name: 'Ghibli Style Transformer',
+        description: 'Payment for photo transformation',
         order_id: data.id,
         handler: async function (response: RazorpayResponse) {
           try {
@@ -204,9 +192,10 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
             onSuccess({
               orderId: response.razorpay_order_id,
               paymentId: response.razorpay_payment_id,
-              amount: selectedPackage?.price,
+              amount: parseFloat(amount),
               email,
-              package: selectedPackage
+              packageId: packageInfo?.id,
+              photoCount: packageInfo?.photoCount
             });
           } catch (error: any) {
             setError(error.message || 'Payment verification failed');
@@ -216,7 +205,7 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
           email: email,
         },
         theme: {
-          color: '#4F46E5',
+          color: '#a855f7',
         },
         modal: {
           ondismiss: function() {
@@ -281,42 +270,39 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-4 py-3 sm:text-sm border-gray-300 rounded-lg shadow-sm transition duration-150"
+                className="focus:ring-purple-500 focus:border-purple-500 block w-full pl-10 pr-4 py-3 sm:text-sm border-gray-300 rounded-lg shadow-sm transition duration-150"
                 placeholder="john@example.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select a Package
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+              Amount (INR)
             </label>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {packages.map((pkg) => (
-                <div 
-                  key={pkg.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                    selectedPackage?.id === pkg.id 
-                      ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500' 
-                      : 'border-gray-200 hover:border-indigo-300'
-                  }`}
-                  onClick={() => setSelectedPackage(pkg)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-900">{pkg.name}</h3>
-                      <p className="mt-1 text-sm text-gray-500">{pkg.description}</p>
-                    </div>
-                    {selectedPackage?.id === pkg.id && (
-                      <svg className="h-5 w-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                  <p className="mt-2 text-lg font-semibold text-gray-900">₹{pkg.price.toFixed(2)}</p>
-                </div>
-              ))}
+            <div className="mt-1 relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 sm:text-sm">₹</span>
+              </div>
+              <input
+                id="amount"
+                name="amount"
+                type="number"
+                min="1"
+                step="0.01"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={amountDisabled}
+                className={`focus:ring-purple-500 focus:border-purple-500 block w-full pl-10 pr-4 py-3 sm:text-sm border-gray-300 rounded-lg shadow-sm transition duration-150 ${
+                  amountDisabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+                placeholder="100"
+              />
             </div>
+            {amountDisabled && (
+              <p className="mt-1 text-xs text-gray-500">Amount is fixed for this package.</p>
+            )}
           </div>
         </div>
 
@@ -324,7 +310,7 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-150"
+            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 transition-all duration-150"
           >
             {loading ? (
               <>

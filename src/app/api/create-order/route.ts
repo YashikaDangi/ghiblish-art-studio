@@ -1,3 +1,4 @@
+// src/app/api/create-order/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createOrder } from '@/lib/razorpay';
 import connectToDatabase from '@/lib/mongodb';
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     // Parse the request body
     const body = await req.json();
-    const { amount, email, packageDetails } = body;
+    const { amount, email, packageId, photoCount } = body;
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
@@ -26,12 +27,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate package details
-    if (!packageDetails || !packageDetails.name || !packageDetails.photoLimit) {
-      return NextResponse.json(
-        { error: 'Package details are required' },
-        { status: 400 }
-      );
+    // Validate package selection if provided
+    if (packageId) {
+      // Optional validation: ensure amount matches expected package price
+      const isValidPackage = validatePackageAmount(packageId, amount);
+      if (!isValidPackage) {
+        return NextResponse.json(
+          { error: 'Invalid package selection or amount' },
+          { status: 400 }
+        );
+      }
     }
 
     // Create a Razorpay order
@@ -44,12 +49,9 @@ export async function POST(req: NextRequest) {
       currency: 'INR',
       status: 'created',
       email,
-      packageDetails: {
-        name: packageDetails.name,
-        photoLimit: packageDetails.photoLimit,
-        description: packageDetails.description || ''
-      },
-      photosUploaded: 0
+      packageId: packageId || null,
+      photoCount: photoCount || null,
+      type: packageId ? 'ghibli_transformation' : 'standard',
     });
 
     return NextResponse.json({
@@ -64,4 +66,17 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper function to validate that a package amount is correct
+function validatePackageAmount(packageId: string, amount: number): boolean {
+  // Define package pricing
+  const packagePricing: Record<string, number> = {
+    'basic': 50,
+    'standard': 200,
+    'premium': 500
+  };
+  
+  // Check if package exists and amount matches
+  return packageId in packagePricing && packagePricing[packageId] === amount;
 }
