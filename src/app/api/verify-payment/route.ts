@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSignature } from '@/lib/razorpay';
 import connectToDatabase from '@/lib/mongodb';
@@ -79,7 +78,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({
+    // Create a response with the payment verification cookie
+    const response = NextResponse.json({
       success: true,
       payment: {
         id: payment._id,
@@ -89,6 +89,17 @@ export async function POST(req: NextRequest) {
         status: payment.status,
       },
     });
+
+    // Set a payment verification cookie that lasts for 2 hours
+    response.cookies.set('payment-verified', 'true', {
+      maxAge: 7200, // 2 hours in seconds
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    return response;
   } catch (error) {
     console.error('Error verifying payment:', error);
     return NextResponse.json(

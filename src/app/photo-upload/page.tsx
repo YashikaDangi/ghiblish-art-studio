@@ -13,6 +13,12 @@ interface PhotoData {
   error: string | null;
 }
 
+interface PhotoUploadData {
+  email: string;
+  photoCount: number;
+  orderId: string;
+}
+
 export default function PhotoUploadPage() {
   const [photos, setPhotos] = useState<PhotoData[]>([]);
   const [maxPhotos, setMaxPhotos] = useState<number>(0);
@@ -20,38 +26,57 @@ export default function PhotoUploadPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentlyTransforming, setCurrentlyTransforming] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [uploadData, setUploadData] = useState<PhotoUploadData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // For testing purposes - you can set a default value
-    setMaxPhotos(5);
-
-    // Retrieve payment details from session storage
-    const storedPaymentDetails = sessionStorage.getItem('paymentDetails');
-    
-    if (!storedPaymentDetails) {
-      // If no payment details, we'll just use default for testing
-      console.log("No payment details found in session storage - using default values for testing");
-      // Uncomment this to enforce the actual flow:
-      // router.push('/');
-      // return;
-    } else {
+    // Check if we have a valid payment session and required data
+    const checkSession = async () => {
       try {
-        const paymentDetails = JSON.parse(storedPaymentDetails);
-        const packageInfo = paymentDetails.packageInfo;
+        // Try to get the stored data from localStorage
+        const storedData = localStorage.getItem('photo-upload-data');
         
-        if (!packageInfo || !packageInfo.photoCount) {
-          console.warn("Invalid package information");
+        if (storedData) {
+          try {
+            const data = JSON.parse(storedData) as PhotoUploadData;
+            setUploadData(data);
+            setMaxPhotos(data.photoCount);
+            setEmail(data.email || '');
+          } catch (error) {
+            console.error('Error parsing stored data:', error);
+            // If there's an error parsing the data, clear it
+            localStorage.removeItem('photo-upload-data');
+            router.push('/?error=invalid-data');
+          }
         } else {
-          setMaxPhotos(packageInfo.photoCount);
-          setEmail(paymentDetails.email || '');
+          // For testing purposes (remove in production)
+          console.log("No stored data found - using default values for testing");
+          setMaxPhotos(5);
+          
+          // Check if we have a valid payment session
+          const response = await fetch('/api/check-payment-session', {
+            method: 'GET',
+            credentials: 'include',
+          });
+          
+          // If no valid payment session and no stored data, redirect to home
+          if (response.status !== 200) {
+            router.push('/?error=payment-required');
+          }
         }
       } catch (error) {
-        console.error('Error parsing payment details:', error);
+        console.error('Error checking session:', error);
       }
-    }
-  }, []);
+    };
+    
+    checkSession();
+
+    // Cleanup function to remove data when component unmounts
+    return () => {
+      localStorage.removeItem('photo-upload-data');
+    };
+  }, [router]);
 
   // Clean up object URLs on unmount
   useEffect(() => {
@@ -163,11 +188,14 @@ export default function PhotoUploadPage() {
     );
     
     try {
+      // In a real implementation, you would send the image to your API
+      const formData = new FormData();
+      formData.append('file', photo.file);
+      formData.append('orderId', uploadData?.orderId || '');
+      formData.append('email', email);
+      
       // For demonstration, we'll simulate a transformation
       console.log("Starting transformation for", photo.file.name);
-      
-      // In a real implementation, you would send the image to your API
-      // const response = await fetch('/api/transform-image', {...})
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -252,6 +280,24 @@ export default function PhotoUploadPage() {
     transformedPhotos.forEach(photo => {
       handleDownload(photo);
     });
+  };
+  
+  const handleLogout = async () => {
+    try {
+      // Call the logout API endpoint
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      // Clear local storage
+      localStorage.removeItem('photo-upload-data');
+      
+      // Redirect to home page
+      router.push('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -437,10 +483,35 @@ export default function PhotoUploadPage() {
               </div>
             </div>
           )}
+          
+          {!photos.length && !uploadData && (
+            <div className="text-center py-12">
+              <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400 mb-6 inline-block text-left">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      Your session may have expired or you haven't completed payment.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Link
+                href="/"
+                className="mt-4 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+              >
+                Return to Package Selection
+              </Link>
+            </div>
+          )}
         </div>
       </div>
       
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 flex justify-center space-x-6">
         <Link 
           href="/" 
           className="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-500"
@@ -450,6 +521,16 @@ export default function PhotoUploadPage() {
           </svg>
           Back to Home
         </Link>
+        
+        <button
+          onClick={handleLogout}
+          className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-800"
+        >
+          <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Logout
+        </button>
       </div>
     </div>
   );

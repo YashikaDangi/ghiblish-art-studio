@@ -1,5 +1,5 @@
 // src/components/GhibliSuccessMessage.tsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 
 interface GhibliSuccessMessageProps {
@@ -22,6 +22,14 @@ export default function GhibliSuccessMessage({ paymentDetails }: GhibliSuccessMe
   const router = useRouter();
 
   const handleContinue = () => {
+    // Store only the essential information in localStorage for recovery after navigation
+    // This data will be cleared when the PhotoUpload component unmounts
+    localStorage.setItem('photo-upload-data', JSON.stringify({
+      email: paymentDetails.email,
+      photoCount: paymentDetails.packageInfo.photoCount,
+      orderId: paymentDetails.orderId
+    }));
+    
     // Navigate to the photo upload page
     router.push('/photo-upload');
   };
